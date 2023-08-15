@@ -3,11 +3,28 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"sync"
 )
+
+type RsyncOptions struct {
+	Username    string
+	Hostname    string
+	Path        string
+	Destination string
+	OnProgress  func(p int)
+}
+
+func (r *RsyncOptions) Uri() string {
+	result := fmt.Sprintf("%s:%s", r.Hostname, r.Path)
+	if r.Username == "" {
+		return result
+	}
+	return fmt.Sprintf("%s@%s", r.Username, result)
+}
 
 type Rsync struct {
 	Source      string
@@ -17,11 +34,11 @@ type Rsync struct {
 	progress int
 }
 
-func NewRsync(source, destination string, onProgress func(p int)) *Rsync {
+func NewRsync(options *RsyncOptions) *Rsync {
 	return &Rsync{
-		Source:      source,
-		Destination: destination,
-		OnProgress:  onProgress,
+		Source:      options.Uri(),
+		Destination: options.Destination,
+		OnProgress:  options.OnProgress,
 		progress:    -1,
 	}
 }
@@ -68,8 +85,8 @@ func (r *Rsync) Run() error {
 		progressMatch := regexp.MustCompile(`(\d+)%`)
 		for scanner.Scan() {
 			progress := scanner.Text()
-			if progressMatch.MatchString(progress) {
-				m := progressMatch.FindStringSubmatch(progress)
+			m := progressMatch.FindStringSubmatch(progress)
+			if len(m) == 2 {
 				if p, err := strconv.Atoi(m[1]); err == nil {
 					r.OnProgress(p)
 				}

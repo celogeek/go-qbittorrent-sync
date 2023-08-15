@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/go-resty/resty/v2"
@@ -164,7 +163,6 @@ func (c *QBittorrentCli) SetProgress(t *Torrent, p int) error {
 	}
 
 	t.Progress = p
-	log.Printf("Downloading [%s]: %d%%", t.Name, p)
 	return nil
 }
 

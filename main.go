@@ -2,31 +2,49 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
-	"time"
 )
 
-type Options struct {
-	Qbittorent QBitTorrentOptions
+type RsyncOptions struct {
+	Username string
+	Hostname string
+}
+
+func (r *RsyncOptions) Uri(path string) string {
+	result := fmt.Sprintf("%s:%s", r.Hostname, path)
+	if r.Username == "" {
+		return result
+	}
+	return fmt.Sprintf("%s@%s", r.Username, result)
 }
 
 func main() {
-	options := &Options{}
-	flag.StringVar(&options.Qbittorent.Uri, "qbittorrent-uri", "http://localhost:8080", "URI of qbittorrent")
-	flag.StringVar(&options.Qbittorent.Username, "qbittorrent-username", "", "Username of qbittorrent")
-	flag.StringVar(&options.Qbittorent.Password, "qbittorrent-password", "", "Password of qbittorrent")
-	flag.StringVar(&options.Qbittorent.SyncTag, "qbittorrent-sync-tag", "Sync", "Tag of qbittorrent to copy")
-	flag.StringVar(&options.Qbittorent.SyncedTag, "qbittorrent-synced-tag", "", "Tag of qbittorrent when copy finished")
+	qbitoptions := &QBitTorrentOptions{}
+	rsyncoptions := &RsyncOptions{}
+	dest := ""
+	flag.StringVar(&qbitoptions.Uri, "qbittorrent-uri", "http://localhost:8080", "URI of qbittorrent")
+	flag.StringVar(&qbitoptions.Username, "qbittorrent-username", "", "Username of qbittorrent")
+	flag.StringVar(&qbitoptions.Password, "qbittorrent-password", "", "Password of qbittorrent")
+	flag.StringVar(&qbitoptions.SyncTag, "qbittorrent-sync-tag", "Sync", "Tag of qbittorrent to copy")
+	flag.StringVar(&qbitoptions.SyncedTag, "qbittorrent-synced-tag", "", "Tag of qbittorrent when copy finished")
+	flag.StringVar(&rsyncoptions.Hostname, "rsync-hostname", "", "Rsync host")
+	flag.StringVar(&rsyncoptions.Username, "rsync-username", "", "Rsync username")
+	flag.StringVar(&dest, "dest", ".", "Destination directory")
 	flag.Parse()
 
-	if options.Qbittorent.Uri == "" ||
-		options.Qbittorent.Username == "" ||
-		options.Qbittorent.Password == "" ||
-		options.Qbittorent.SyncTag == "" {
+	if qbitoptions.Uri == "" ||
+		qbitoptions.Username == "" ||
+		qbitoptions.Password == "" ||
+		qbitoptions.SyncTag == "" {
 		log.Fatal("missing qbittorrent parameters")
 	}
 
-	qcli, err := NewQBittorrentCli(&options.Qbittorent)
+	if rsyncoptions.Hostname == "" {
+		log.Fatal("missing rsync parameters")
+	}
+
+	qcli, err := NewQBittorrentCli(qbitoptions)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,12 +56,20 @@ func main() {
 	}
 
 	for _, t := range torrents {
-		for p := 0; p <= 100; p += 20 {
+		rtask := NewRsync(
+			rsyncoptions.Uri(t.Path),
+			dest,
+			func(p int) {
+				qcli.SetProgress(t, p)
+			},
+		)
+
+		if err := rtask.Run(); err != nil {
 			qcli.ClearTags()
-			qcli.SetProgress(&t, p)
-			time.Sleep(time.Second)
+			log.Fatal(err)
 		}
-		qcli.SetDone(&t)
+
+		qcli.SetDone(t)
 	}
 }
 

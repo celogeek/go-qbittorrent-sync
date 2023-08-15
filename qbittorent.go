@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/go-resty/resty/v2"
@@ -60,8 +61,8 @@ func (c *QBittorrentCli) Logout() error {
 	return err
 }
 
-func (c *QBittorrentCli) List() ([]Torrent, error) {
-	result := make([]Torrent, 0)
+func (c *QBittorrentCli) List() ([]*Torrent, error) {
+	result := make([]*Torrent, 0)
 
 	_, err := c.cli.R().
 		SetQueryParam("filter", "completed").
@@ -152,8 +153,19 @@ func (c *QBittorrentCli) SetProgress(t *Torrent, p int) error {
 		return nil
 	}
 
+	err := c.ClearTags()
+	if err != nil {
+		return err
+	}
+
+	c.SetTag(t, fmt.Sprintf("Progress:%d%%", p))
+	if err != nil {
+		return err
+	}
+
 	t.Progress = p
-	return c.SetTag(t, fmt.Sprintf("Progress:%d%%", p))
+	log.Printf("Downloading [%s]: %d%%", t.Name, p)
+	return nil
 }
 
 func (c *QBittorrentCli) SetDone(t *Torrent) error {

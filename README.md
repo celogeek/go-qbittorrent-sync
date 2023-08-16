@@ -12,7 +12,7 @@ First ensure to have a working version of GO: [Installation](https://go.dev/doc/
 
 Then install the last version of the tool:
 ```
-$ go install github.com/celogeek/go-qbittorrent-sync
+$ go install github.com/celogeek/go-qbittorrent-sync@latest
 ```
 
 ## Usage

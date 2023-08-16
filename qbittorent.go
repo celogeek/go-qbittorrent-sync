@@ -178,7 +178,7 @@ func (c *QBittorrentCli) SetDone(t *Torrent) error {
 			"hashes": t.Hash,
 			"tags":   c.SyncTag,
 		}).
-		Post("/torrents/deleteTags")
+		Post("/torrents/removeTags")
 
 	if err != nil {
 		return err

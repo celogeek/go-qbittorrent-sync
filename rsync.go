@@ -15,6 +15,7 @@ type RsyncOptions struct {
 	Hostname    string
 	Path        string
 	Destination string
+	Rsh         string
 	OnProgress  func(p int)
 }
 
@@ -29,6 +30,7 @@ func (r *RsyncOptions) Uri() string {
 type Rsync struct {
 	Source      string
 	Destination string
+	Rsh         string
 	OnProgress  func(p int)
 
 	progress int
@@ -38,6 +40,7 @@ func NewRsync(options *RsyncOptions) *Rsync {
 	return &Rsync{
 		Source:      options.Uri(),
 		Destination: options.Destination,
+		Rsh:         options.Rsh,
 		OnProgress:  options.OnProgress,
 		progress:    -1,
 	}
@@ -60,15 +63,20 @@ func ScanCR(data []byte, atEOF bool) (advance int, token []byte, err error) {
 }
 
 func (r *Rsync) Run() error {
-	cmd := exec.Command(
-		"rsync",
+	args := []string{
 		"--archive",
 		"--partial",
 		"--inplace",
 		"--no-inc-recursive",
 		"--info=progress2",
-		r.Source,
-		r.Destination,
+	}
+	if r.Rsh != "" {
+		args = append(args, "--rsh", r.Rsh)
+	}
+	args = append(args, r.Source, r.Destination)
+	cmd := exec.Command(
+		"rsync",
+		args...,
 	)
 	out, err := cmd.StdoutPipe()
 	if err != nil {

@@ -18,6 +18,7 @@ func main() {
 	flag.StringVar(&rsyncoptions.Hostname, "rsync-hostname", "", "Rsync host")
 	flag.StringVar(&rsyncoptions.Username, "rsync-username", "", "Rsync username")
 	flag.StringVar(&rsyncoptions.Destination, "rsync-destination", ".", "Rsync Destination directory")
+	flag.StringVar(&rsyncoptions.Rsh, "rsync-rsh", ".", "Rsync rsh command")
 	flag.IntVar(&poolTime, "pool-time", 30, "Number of second to check new files to sync")
 	flag.Parse()
 
@@ -59,6 +60,7 @@ func main() {
 					Username:    rsyncoptions.Username,
 					Hostname:    rsyncoptions.Hostname,
 					Destination: rsyncoptions.Destination,
+					Rsh:         rsyncoptions.Rsh,
 					Path:        t.Path,
 					OnProgress: func(p int) {
 						err := qcli.SetProgress(t, p)

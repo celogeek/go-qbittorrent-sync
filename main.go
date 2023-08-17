@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"log"
+	"os"
 	"time"
 )
 
@@ -13,6 +15,7 @@ func main() {
 	flag.StringVar(&qbitoptions.Uri, "qbittorrent-uri", "http://localhost:8080", "URI of qbittorrent")
 	flag.StringVar(&qbitoptions.Username, "qbittorrent-username", "", "Username of qbittorrent")
 	flag.StringVar(&qbitoptions.Password, "qbittorrent-password", "", "Password of qbittorrent")
+	flag.StringVar(&qbitoptions.PasswordFile, "qbittorrent-password-file", "", "Password file with the password of qbittorrent")
 	flag.StringVar(&qbitoptions.SyncTag, "qbittorrent-sync-tag", "Sync", "Tag of qbittorrent to copy")
 	flag.StringVar(&qbitoptions.SyncedTag, "qbittorrent-synced-tag", "", "Tag of qbittorrent when copy finished")
 	flag.StringVar(&rsyncoptions.Hostname, "rsync-hostname", "", "Rsync host")
@@ -21,6 +24,19 @@ func main() {
 	flag.StringVar(&rsyncoptions.Rsh, "rsync-rsh", ".", "Rsync rsh command")
 	flag.IntVar(&poolTime, "pool-time", 30, "Number of second to check new files to sync")
 	flag.Parse()
+
+	if qbitoptions.PasswordFile != "" {
+		var b []byte
+		var ok bool
+		var err error
+		if b, err = os.ReadFile(qbitoptions.PasswordFile); err != nil {
+			log.Fatalf("[Qbit] Reading password file failed: %v", err)
+		}
+		if b, ok = bytes.CutSuffix(b, []byte{'\r', '\n'}); !ok {
+			b, _ = bytes.CutSuffix(b, []byte{'\n'})
+		}
+		qbitoptions.Password = string(b)
+	}
 
 	if qbitoptions.Uri == "" ||
 		qbitoptions.Username == "" ||

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -8,11 +10,12 @@ import (
 )
 
 type QBitTorrentOptions struct {
-	Uri       string
-	Username  string
-	Password  string
-	SyncTag   string
-	SyncedTag string
+	Uri          string
+	Username     string
+	Password     string
+	PasswordFile string
+	SyncTag      string
+	SyncedTag    string
 }
 
 type QBittorrentCli struct {
@@ -32,7 +35,7 @@ type Torrent struct {
 func NewQBittorrentCli(options *QBitTorrentOptions) (*QBittorrentCli, error) {
 	r := resty.New().SetBaseURL(fmt.Sprintf("%s/api/v2", options.Uri))
 
-	_, err := r.
+	result, err := r.
 		R().
 		SetFormData(map[string]string{
 			"username": options.Username,
@@ -42,6 +45,10 @@ func NewQBittorrentCli(options *QBitTorrentOptions) (*QBittorrentCli, error) {
 
 	if err != nil {
 		return nil, err
+	}
+
+	if !bytes.Equal(result.Body(), []byte("Ok.")) {
+		return nil, errors.New("auth failed")
 	}
 
 	cli := &QBittorrentCli{

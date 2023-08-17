@@ -25,6 +25,8 @@ Usage of go-qbittorrent-sync:
     	Number of second to check new files to sync (default 30)
   -qbittorrent-password string
     	Password of qbittorrent
+  -qbittorrent-password-file string
+    	Password file with the password of qbittorrent
   -qbittorrent-sync-tag string
     	Tag of qbittorrent to copy (default "Sync")
   -qbittorrent-synced-tag string

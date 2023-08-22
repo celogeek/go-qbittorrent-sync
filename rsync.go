@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -69,6 +70,7 @@ func (r *Rsync) Run() error {
 		"--inplace",
 		"--no-inc-recursive",
 		"--info=progress2",
+		"-s",
 	}
 	if r.Rsh != "" {
 		args = append(args, "--rsh", r.Rsh)
@@ -78,6 +80,7 @@ func (r *Rsync) Run() error {
 		"rsync",
 		args...,
 	)
+	cmd.Stderr = os.Stderr
 	out, err := cmd.StdoutPipe()
 	if err != nil {
 		return err

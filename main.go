@@ -64,6 +64,9 @@ func main() {
 		torrents, err := qcli.List()
 		if err != nil {
 			log.Printf("[QBit] List Error: %v", err)
+			if err.Error() == "forbidden" {
+				log.Fatal("Need to authenticate again. Exiting ...")
+			}
 		}
 		if len(torrents) > 0 {
 			log.Printf("[QBit] Found %d torrents to sync", len(torrents))

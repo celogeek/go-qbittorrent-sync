@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/go-resty/resty/v2"
@@ -34,6 +35,12 @@ type Torrent struct {
 
 func NewQBittorrentCli(options *QBitTorrentOptions) (*QBittorrentCli, error) {
 	r := resty.New().SetBaseURL(fmt.Sprintf("%s/api/v2", options.Uri))
+	r.OnAfterResponse(func(c *resty.Client, r *resty.Response) error {
+		if r.StatusCode() == http.StatusForbidden {
+			return errors.New("forbidden")
+		}
+		return nil
+	})
 
 	result, err := r.
 		R().
